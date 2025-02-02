@@ -153,8 +153,9 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                         # Convert SQL Department & Job Title
                         if ($Row.JobTitle -like "*Compliance*") {
                             $SqlDepartment = "Compliance"
-                        }
-                        else {
+                        } elseif ($Row.Department -like "*EVS*") {
+                            $SqlDepartment = "EVS"
+                        } else {
                             $SqlDepartment = ConvertDeptName -department $Row.Department
                         }
                         $SqlTitle = MapJobTitles -adTitle $Row.JobTitle
