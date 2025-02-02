@@ -6,8 +6,8 @@
 #>
 
 # Import Required Modules
-Import-Module "C:\PowerShellModules\SqlUtils.ps1"      # Custom SQL utility functions
-. "C:\PowerShellModules\Functions.ps1"                # Custom department & title mapping functions
+Import-Module "C:\ADSweeper\Script\SqlUtils.ps1"      # Custom SQL utility functions
+. "C:\ADSweeper\Script\Functions.ps1"                # Custom department & title mapping functions
 Import-Module ActiveDirectory
 Import-Module ImportExcel
 
@@ -31,7 +31,7 @@ $ExcludedDepartments = @(
     )
 
 # Set Up Base Excel Export Path
-$BaseExportPath = "C:\ADSweeper"
+$BaseExportPath = "C:\ADSweeper\Output"
 
 # Ensure Base Export Path exists
 if (-not (Test-Path -Path $BaseExportPath)) {
@@ -370,7 +370,7 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
 
                 # Highlight EmployeeNumber if it's changed
                 if ("EmployeeNumber" -in $Changes.Keys) {
-                    Set-ExcelRange -Worksheet $ws -Range "I${row}:I${row}" -BackgroundColor '#FFCCCC' 
+                    Set-ExcelRange -Worksheet $ws -Range "I${row}:I${row}" -BackgroundColor LightGreen 
                     $formattedCells += "I${row}"
                     $hasIssue = $true
                 }
