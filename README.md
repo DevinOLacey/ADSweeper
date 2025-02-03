@@ -64,10 +64,3 @@ C:\ADSweeper\Script\Add Employee Number.bat
 
 ## Support
 For support, contact Devin Lacey at Devin.Lacey@JamulCasino.com
-
-### Key Improvements:
-- **Concise formatting:** Uses bullet points and sections for clarity.
-- **Minimal but essential details:** Removed redundant wording while preserving all necessary setup steps.
-- **Proper Markdown formatting:** Ensures compatibility with GitHub and easy readability.
-
-This **README.md** can be placed in your GitHub repository, providing a simple, structured guide for users to download, install, and execute the AD Sweeper script. 🚀
