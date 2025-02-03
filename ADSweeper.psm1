@@ -19,4 +19,4 @@ function Invoke-ADSweeper {
 }
 
 # Export the public functions (for testing, we export the helper functions as well).
-Export-ModuleMember -Function Invoke-ADSweeper, Connect-SqlServer, Execute-SqlQuery, Close-SqlConnection
+Export-ModuleMember -Function Invoke-ADSweeper
