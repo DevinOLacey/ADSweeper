@@ -6,7 +6,7 @@ if (-not $PSScriptRoot) {
     $PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 }
 
-Write-Verbose "Loading SQL Utils from $PSScriptRoot" 
+Write-Verbose "Loading SQL Utils from $PSScriptRoot"
 
 # === Connection Details ===
 $ServerName   = "jcdbs05pr"
@@ -25,13 +25,27 @@ $Password          = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
                         [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
                      )
 
-# Load the SQL Client DLL using a relative path.
+# Define the path to the SQL Client DLL using a relative path.
 $SqlClientDll = Join-Path -Path $PSScriptRoot -ChildPath "Dependencies\Microsoft.Data.SqlClient.5.0.1\lib\netstandard2.0\Microsoft.Data.SqlClient.dll"
-if (Test-Path $SqlClientDll) {
-    Add-Type -Path $SqlClientDll
+
+# Automatically unblock the DLL if it is marked as downloaded from the internet.
+try {
+    $zoneIdentifier = Get-Item -Path $SqlClientDll -Stream "Zone.Identifier" -ErrorAction SilentlyContinue
+    if ($zoneIdentifier) {
+        Write-Verbose "DLL is blocked. Attempting to unblock: $SqlClientDll"
+        Unblock-File -Path $SqlClientDll -ErrorAction Stop
+        Write-Verbose "DLL unblocked successfully."
+    }
+} catch {
+    Write-Verbose "Could not check or unblock the DLL: $_"
+}
+
+# Load the SQL Client DLL.
+try {
+    Add-Type -Path $SqlClientDll -ErrorAction Stop
     Write-Host "Loaded SQL Client DLL from: $SqlClientDll" -ForegroundColor Green
-} else {
-    Write-Error "SQL Client DLL not found at: $SqlClientDll"
+} catch {
+    Write-Error "Failed to load SQL Client DLL: $($_.Exception.Message)"
     return
 }
 
@@ -41,7 +55,7 @@ function Connect-SqlServer {
 
     # Build the connection string.
     $connString = "Server=$ServerName,1433;Database=$DatabaseName;User ID=$Username;Password=$Password;TrustServerCertificate=True;"
-    Write-Verbose "Connection string: $connString"  # (For debugging; remove or mask sensitive details in production.)
+    Write-Verbose "Connection string: $connString"  # (For debugging purposes. Remove or mask sensitive details in production.)
 
     $conn = New-Object System.Data.SqlClient.SqlConnection
     $conn.ConnectionString = $connString
