@@ -1,65 +1,95 @@
-# Hard-coded connection details
-$ServerName = "jcdbs05pr"
-$DatabaseName = "IDWorks" 
-$Username = "insights_svc"
+# SqlUtils.ps1
+# This file provides functions for SQL Server connectivity and query execution.
 
-# Read the encrypted password from the file
-$EncryptedPassword = Get-Content -Path "C:\PowerShellModules\encrypted_password.txt"
-$SecurePassword = $EncryptedPassword | ConvertTo-SecureString
+# Ensure $PSScriptRoot is set.
+if (-not $PSScriptRoot) {
+    $PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
 
-# Convert the secure string to a plain text password
-$Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword))
+Write-Verbose "Loading SQL Utils from $PSScriptRoot" 
 
-# Function to create a SQL Server connection
+# === Connection Details ===
+$ServerName   = "jcdbs05pr"
+$DatabaseName = "IDWorks"
+$Username     = "insights_svc"
+
+# Read the encrypted password from the file using a relative path.
+$encryptedPasswordPath = Join-Path -Path $PSScriptRoot -ChildPath "encrypted_password.txt"
+if (-not (Test-Path $encryptedPasswordPath)) {
+    Write-Error "Encrypted password file not found at $encryptedPasswordPath"
+    return
+}
+$EncryptedPassword = Get-Content -Path $encryptedPasswordPath
+$SecurePassword    = $EncryptedPassword | ConvertTo-SecureString
+$Password          = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                        [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
+                     )
+
+# Load the SQL Client DLL using a relative path.
+$SqlClientDll = Join-Path -Path $PSScriptRoot -ChildPath "Dependencies\Microsoft.Data.SqlClient.5.0.1\lib\netstandard2.0\Microsoft.Data.SqlClient.dll"
+if (Test-Path $SqlClientDll) {
+    Add-Type -Path $SqlClientDll
+    Write-Host "Loaded SQL Client DLL from: $SqlClientDll" -ForegroundColor Green
+} else {
+    Write-Error "SQL Client DLL not found at: $SqlClientDll"
+    return
+}
+
+# === Function: Connect-SqlServer ===
 function Connect-SqlServer {
-    Add-Type -Path "C:\PowerShellModules\Dependencies\Microsoft.Data.SqlClient.5.0.1\lib\netstandard2.0\Microsoft.Data.SqlClient.dll"
+    Write-Host "Attempting to connect to SQL Server..." -ForegroundColor Yellow
 
+    # Build the connection string.
     $connString = "Server=$ServerName,1433;Database=$DatabaseName;User ID=$Username;Password=$Password;TrustServerCertificate=True;"
-    # Write-Host "Connection String: $connString" -ForegroundColor Yellow  # Debugging
+    Write-Verbose "Connection string: $connString"  # (For debugging; remove or mask sensitive details in production.)
+
     $conn = New-Object System.Data.SqlClient.SqlConnection
     $conn.ConnectionString = $connString
 
     try {
         $conn.Open()
-        Write-Host "Connected to SQL Server successfully!"
+        Write-Host "Connected to SQL Server successfully!" -ForegroundColor Green
         return $conn
-    } catch {
-        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+    }
+    catch {
+        Write-Host "Error connecting to SQL Server: $($_.Exception.Message)" -ForegroundColor Red
         return $null
     }
 }
 
-# Function to execute a SQL query and return results
+# === Function: Execute-SqlQuery ===
 function Execute-SqlQuery {
     param (
         [System.Data.SqlClient.SqlConnection]$Connection,
         [string]$SqlQuery
     )
 
-    if ($Connection -and $Connection.State -eq 'Open') {
-        if ([string]::IsNullOrEmpty($SqlQuery)) {
-            Write-Host "SQL query cannot be null or empty." -ForegroundColor Red
-            return $null
-        }
-
-        try {
-            $cmd = $Connection.CreateCommand()
-            $cmd.CommandText = $SqlQuery
-            $adapter = New-Object System.Data.SqlClient.SqlDataAdapter $cmd
-            $dataTable = New-Object System.Data.DataTable
-            $adapter.Fill($dataTable) | Out-Null
-            return $dataTable
-        } catch {
-            Write-Host "Error executing query: $($_.Exception.Message)" -ForegroundColor Red
-            return $null
-        }
-    } else {
+    if (-not $Connection -or $Connection.State -ne 'Open') {
         Write-Host "Connection is not open!" -ForegroundColor Red
+        return $null
+    }
+
+    if ([string]::IsNullOrEmpty($SqlQuery)) {
+        Write-Host "SQL query cannot be null or empty." -ForegroundColor Red
+        return $null
+    }
+
+    try {
+        $cmd = $Connection.CreateCommand()
+        $cmd.CommandText = $SqlQuery
+        $adapter = New-Object System.Data.SqlClient.SqlDataAdapter $cmd
+        $dataTable = New-Object System.Data.DataTable
+        $adapter.Fill($dataTable) | Out-Null
+        Write-Verbose "SQL query executed successfully."
+        return $dataTable
+    }
+    catch {
+        Write-Host "Error executing SQL query: $($_.Exception.Message)" -ForegroundColor Red
         return $null
     }
 }
 
-# Function to close the SQL connection
+# === Function: Close-SqlConnection ===
 function Close-SqlConnection {
     param (
         [System.Data.SqlClient.SqlConnection]$Connection
@@ -68,8 +98,9 @@ function Close-SqlConnection {
     if ($Connection -and $Connection.State -eq 'Open') {
         $Connection.Close()
         $Connection.Dispose()
-        Write-Host "Connection closed."
-    } else {
+        Write-Host "SQL Connection closed." -ForegroundColor Green
+    }
+    else {
         Write-Host "Connection was not open or already closed." -ForegroundColor Yellow
     }
 }

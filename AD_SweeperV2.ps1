@@ -4,10 +4,11 @@
     Author     : Devin Lacey
     Date       : 01/17/2025
 #>
+Write-Host "AD_SweeperV2 is running..." -ForegroundColor Green
 
 # Import Required Modules
-Import-Module "C:\ADSweeper\Script\SqlUtils.ps1"      # Custom SQL utility functions
-. "C:\ADSweeper\Script\Functions.ps1"                # Custom department & title mapping functions
+# Import-Module "C:\ADSweeper\Script\SqlUtils.ps1"      # Custom SQL utility functions
+# . "C:\ADSweeper\Script\Functions.ps1"                # Custom department & title mapping functions
 Import-Module ActiveDirectory
 Import-Module ImportExcel
 
@@ -408,7 +409,7 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
             }
         }
         else {
-            Write-Warning "No users with insufficient access rights found to export."
+            # Write-Warning "No users with insufficient access rights found to export."
         }
 
         # Close SQL Connection
@@ -418,4 +419,3 @@ catch {
     Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "Line: $($_.InvocationInfo.ScriptLineNumber) | Command: $($_.InvocationInfo.MyCommand)" -ForegroundColor Red
 }
-
