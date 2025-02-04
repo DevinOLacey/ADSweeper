@@ -13,17 +13,30 @@ $ServerName   = "jcdbs05pr"
 $DatabaseName = "IDWorks"
 $Username     = "insights_svc"
 
-# Read the encrypted password from the file using a relative path.
-$encryptedPasswordPath = Join-Path -Path $PSScriptRoot -ChildPath "encrypted_password.txt"
-if (-not (Test-Path $encryptedPasswordPath)) {
-    Write-Error "Encrypted password file not found at $encryptedPasswordPath"
+# Set paths for encrypted password and key
+$PasswordFile = Join-Path -Path $PSScriptRoot -ChildPath "encrypted_password.txt"
+$KeyFile = Join-Path -Path $PSScriptRoot -ChildPath "encryption_key.bin"
+
+# Check if both files exist
+if (-not (Test-Path $PasswordFile) -or -not (Test-Path $KeyFile)) {
+    Write-Error "Missing encryption files. Please generate new encrypted credentials."
     return
 }
-$EncryptedPassword = Get-Content -Path $encryptedPasswordPath
-$SecurePassword    = $EncryptedPassword | ConvertTo-SecureString
-$Password          = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                        [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
-                     )
+
+# Read encryption key and encrypted password
+$Key = Get-Content -Path $KeyFile -Encoding Byte
+$EncryptedPassword = Get-Content -Path $PasswordFile
+
+# Decrypt the password
+try {
+    $SecurePassword = ConvertTo-SecureString -String $EncryptedPassword -Key $Key
+    $Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+        [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
+    )
+} catch {
+    Write-Error "Failed to decrypt the SQL password. Ensure the encryption key and password file are correct."
+    return
+}
 
 # Define the path to the SQL Client DLL using a relative path.
 $SqlClientDll = Join-Path -Path $PSScriptRoot -ChildPath "Dependencies\Microsoft.Data.SqlClient.5.0.1\lib\netstandard2.0\Microsoft.Data.SqlClient.dll"

@@ -10,7 +10,11 @@ Write-Host "AD_SweeperV2 is running..." -ForegroundColor Green
 # Import-Module "C:\ADSweeper\Script\SqlUtils.ps1"      # Custom SQL utility functions
 # . "C:\ADSweeper\Script\Functions.ps1"                # Custom department & title mapping functions
 Import-Module ActiveDirectory
-Import-Module ImportExcel
+# Ensure ImportExcel is installed
+if (-not (Get-Module -ListAvailable -Name ImportExcel)) {
+    Write-Host "ImportExcel module not found. Installing it now..." -ForegroundColor Yellow
+    Install-Module ImportExcel -Scope CurrentUser -Force -SkipPublisherCheck
+}
 
 # Departments to exclude
 $ExcludedDepartments = @(
