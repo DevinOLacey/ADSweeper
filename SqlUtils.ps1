@@ -13,30 +13,47 @@ $ServerName   = "jcdbs05pr"
 $DatabaseName = "IDWorks"
 $Username     = "insights_svc"
 
-# Set paths for encrypted password and key
+# Set paths
 $PasswordFile = Join-Path -Path $PSScriptRoot -ChildPath "encrypted_password.txt"
 $KeyFile = Join-Path -Path $PSScriptRoot -ChildPath "encryption_key.bin"
 
-# Check if both files exist
-if (-not (Test-Path $PasswordFile) -or -not (Test-Path $KeyFile)) {
-    Write-Error "Missing encryption files. Please generate new encrypted credentials."
+# Validate that both files exist
+if (-not (Test-Path $PasswordFile)) {
+    Write-Error "ERROR: Encrypted password file not found at: $PasswordFile"
     return
 }
 
-# Read encryption key and encrypted password
-$Key = Get-Content -Path $KeyFile -Encoding Byte
-$EncryptedPassword = Get-Content -Path $PasswordFile
+if (-not (Test-Path $KeyFile)) {
+    Write-Error "ERROR: Encryption key file not found at: $KeyFile"
+    return
+}
 
-# Decrypt the password
+# Read encryption key (256-bit length required)
+$Key = [System.IO.File]::ReadAllBytes($KeyFile)
+if ($Key.Length -ne 32) {
+    Write-Error "ERROR: Invalid encryption key length. Expected 32 bytes, found $($Key.Length) bytes."
+    return
+}
+
+# Read encrypted password
+$EncryptedPassword = Get-Content -Path $PasswordFile
+if ([string]::IsNullOrEmpty($EncryptedPassword)) {
+    Write-Error "ERROR: Encrypted password file is empty or corrupt."
+    return
+}
+
+# Decrypt password
 try {
     $SecurePassword = ConvertTo-SecureString -String $EncryptedPassword -Key $Key
     $Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
         [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecurePassword)
     )
 } catch {
-    Write-Error "Failed to decrypt the SQL password. Ensure the encryption key and password file are correct."
+    Write-Error "ERROR: Failed to decrypt the SQL password. Verify encryption files are correct."
     return
 }
+
+
 
 # Define the path to the SQL Client DLL using a relative path.
 $SqlClientDll = Join-Path -Path $PSScriptRoot -ChildPath "Dependencies\Microsoft.Data.SqlClient.5.0.1\lib\netstandard2.0\Microsoft.Data.SqlClient.dll"
