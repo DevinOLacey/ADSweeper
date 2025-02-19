@@ -222,11 +222,12 @@ function MapJobTitles {
         "DIRECTOR OF SURVEILLANCE" = "Director of Surveillance"
         "SURVEILLANCE SHFT MGR" = "Surveillance Shift Manager"
         "SURVEILLANCE LEAD AGENT" = "Lead Surveillance Agent"
+        "SURVEILLANCE AGENT" = "Surveillance Agent"
 
         # Table Games
         "ASST TABLDE GAMES SHFT MGR" = "Assistant Table Games Shift Manager"
         "DIRECTOR OF TABLE GAMES" = "Director of Table Games"
-        "DEALER" = "Dual Rate Supervisor and Dealer"
+        "DEALER" = "Poker Dealer Dual Rate Supervisor"
     }
 
     if ($JobTitleMapping.ContainsKey($upperTitle)) {
@@ -269,6 +270,177 @@ function ConvertToTitleCase {
     $titleCaseString = $textInfo.ToTitleCase($myString.ToLower())
 
     return $titleCaseString
+}
+
+# Define the OU Mapping
+$OUMapping = @{
+    "Guest Services Cashier"            = "OU=Guest Services Cashier,OU=Player Services,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Guest Services Support Cashier"    = "OU=Guest Services Cashier,OU=Player Services,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "VIP Services Manager"              = "OU=VIP Services Manager,OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Security"              = "OU=Security Director,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Chief Financial Officer"           = "OU=Exec,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Executive Assistant"               = "OU=Exec,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Manager on Duty"                   = "OU=Exec,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "President / General Manager"       = "OU=Exec,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Manager"                  = "OU=Security Manager,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Ops Training Manager"     = "OU=Security Manager,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Shift Manager"            = "OU=Security Manager,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant Pit Manager"             = "OU=Assistant Pit Manager,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant Table Games Shift Manager" = "OU=Assistant Pit Manager,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Guest Services Shift Manager"      = "OU=Guest Services Shift Manager,OU=Player Services,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Guest Services Manager"            = "OU=Guest Services Shift Manager,OU=Player Services,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Slot Technician Shift Manager"     = "OU=Slot Technician Shift Manager,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Slot Attendant"                    = "OU=Slot Attendant,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Casino Concierge Temp"             = "OU=Slot Attendant,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Count Room Manager"                = "OU=Count Room Manager,OU=Count,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Buyer"                              = "OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Purchasing"            = "OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Buyer"                      = "OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Surveillance"          = "OU=Director of Surveillance and Transportation,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Surveillance Shift Manager"        = "OU=Surveillance Shift Manager,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Guest Services Supervisor"         = "OU=Guest Services Supervisor,OU=Player Services,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Slot Technician Supervisor"        = "OU=Slot Technical Supervisor,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant Audio Visual Manager"    = "OU=AV Managers,OU=Audio Visual,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Audio Visual Manager"              = "OU=AV Managers,OU=Audio Visual,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    # "Director of Strategic Planning"    = "OU=Jamul Gaming Commission,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant Advertising Manager"     = "OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Group Sales Specialist"            = "OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Facilities Lead"                   = "OU=Facilities Lead,OU=Facilities,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Facilities Supervisor"             = "OU=Facilities Lead,OU=Facilities,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Revenue Auditor"                   = "OU=Revenue Auditor,OU=Finance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Group Sales Manager"               = "OU=Group Sales Manager,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Table Games Supervisor"            = "OU=Table Games Supervisor,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Creative Producer"          = "OU=Senior Graphic Artist,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Graphic Designer"           = "OU=Senior Graphic Artist,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Facilities General Repair"         = "OU=Facilities General Maintenance,OU=Facilities,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Guest Relations Specialist"        = "OU=Guest Relations,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Dispatcher"              = "OU=Security Dispatcher,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Dispatcher - Grave"      = "OU=Security Dispatcher,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Hotel"               = "OU=Hotel Director,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Hotel Manager"                   = "OU=Hotel Manager,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Executive Housekeeper"           = "OU=Hotel Housekeeping,OU=EVS,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Housekeeping Supervisor"         = "OU=Hotel Housekeeping,OU=EVS,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant HR Manager"            = "OU=Sr. HR Specialist,OU=Human Resources,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Graphic Artist"           = "OU=Senior Graphic Artist,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant Manager Promotions and Entertainment" = "OU=Promotions and Entertainment,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Marketing Analyst" = "OU=Marketing Analyst,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Marketing Coordinator" = "OU=Marketing Coordinator,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Promotions and Events Coordinator" = "OU=Promotions and Entertainment,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Promotions and Events Coordinator" = "OU=Promotions and Entertainment,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Marketing Ambassador" = "OU=Marketing Ambassador,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Community Relations Manager" = "OU=Community Relations Manager,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Special Events Planner" = "OU=Special Events Planner,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director Of Advertising" = "OU=Advertising Manager,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Advertising Manager" = "OU=Advertising Manager,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Marketing Database Manager" = "OU=Database Marketing Manager,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Advertising Specialist" = "OU=Advertising Specialist,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Social Media and Content Specialist" = "OU=Social Media and Content Specialist,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director Of Marketing" = "OU=Director Of Marketing,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Player Development VIP Services" = "OU=Player Development Manager,OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Executive Casino Host" = "OU=Senior Executive Casino Host,OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "VIP Services Admin" = "OU=VIP Services Specialist,OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "VIP Services Specialist" = "OU=VIP Services Specialist,OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Executive Casino Host" = "OU=Executive Casino Host,OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Casino Host" = "OU=Casino Host,OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Poker Manager" = "OU=Poker Manager,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Poker Supervisor" = "OU=Poker Supervisor,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Poker Room Host" = "OU=Poker Room Host,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Poker Dealer Dual Rate Supervisor" = "OU=Poker Dealer Dual Rate Supervisor,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Supervisor" = "OU=Security Supervior,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Supervisor - Grave" = "OU=Security Supervior,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Officer" = "OU=Security Officer II,OU=Security Officer,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Coordinator" = "OU=Security Coordinator,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Administrator" = "OU=Security Administrator,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Communications Manager" = "OU=Security Comms Supv,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Exterior Patrol Officer" = "OU=Exterior Patrol Officer,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Exterior Patrol Officer - Grave" = "OU=Exterior Patrol Officer,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Lead Security Officer" = "OU=Security Leads,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Lead Security Officer - Grave" = "OU=Security Leads,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Officer - Grave" = "OU=Security Officer - Grave,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Officer - EMT" = "OU=Security Officer / EMT,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Officer - EMT Grave" = "OU=Security Officer / EMT,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Slot Supervisor" = "OU=Slot Supervisors,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Slots" = "OU=Director of Slots,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Slot Technician Supervisor - Grave" = "OU=Slot Technical Supervisor,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant Slot Shift Manager" = "OU=Assistant Slots Shift Manager,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Slot Shift Manager" = "OU=Assistant Slots Shift Manager,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant Slot Technician Shift Manager" = "OU=Slot Technician Assistant Shift Manager,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Slot Technician" = "OU=Slot Technician,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Spa Manager" = "OU=Spa Manager,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Executive Steward" = "OU=Stewarding,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Lead Surveillance Agent" = "OU=Surveillance Lead Agent,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Surveillance Agent" = "OU=Surveillance Agent,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Surveillance Technician" = "OU=Surveillance Technician,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Table Games" = "OU=Director of Table Games,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Table Games Shift Manager" = "OU=Assistant Table Games Shift Manager,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Front Services Manager" = "OU=Transportation Manager,OU=Valet,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Transportation Supervisor" = "OU=Transportation Supervisor,OU=Valet,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Transportation Manager" = "OU=Transportation Manager,OU=Valet,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Wardrobe Attendant" = "OU=Wardrobe,OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Wardrobe Supervisor" = "OU=Wardrobe,OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Warehouse Manager" = "OU=Warehouse Manager,OU=Warehouse,OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Warehouse Lead Person" = "OU=Warehouse Person,OU=Warehouse,OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Warehouse Person" = "OU=Warehouse Person,OU=Warehouse,OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Warehouse Supervisor" = "OU=Warehouse Supervisor,OU=Warehouse,OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Beverage Server" = "OU=Beverage,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Beverage Cart Attendant" = "OU=Beverage Cart Attendant,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Assistant F&B Manager" = "OU=Supervisors,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Beverage Supervisor" = "OU=Supervisors,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Stewarding Supervisor" = "OU=Stewarding,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Barback" = "OU=Barback,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Prime Cut Barback" = "OU=Barback,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Financial Accountant" = "OU=Financial Accountant,OU=Finance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Marketing Ambassador Lead" = "OU=Marketing Ambassador Lead,OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Audio Visual Technician" = "OU=AV Techs,OU=Audio Visual,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Senior Audio Visual Technician" = "OU=AV Techs,OU=Audio Visual,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Director of Business Intelligence" = "OU=Director of BI Data Analytics,OU=Business Intelligence,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+}
+
+# Function to Map Job Titles to OUs
+function MapOU {
+    param (
+        [string]$jobTitle
+    )
+
+    # Venue-specific OU mappings
+    $venueOUMapping = @{
+        "Emeralds"    = "OU=Asian Restaurant,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Tony Gwynns" = "OU=Tony Gwynns,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Jive"        = "OU=JIVe,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Loft"        = "OU=Loft,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Marketplace" = "OU=Food Court,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    }
+
+    # Check for venue-specific titles
+    foreach ($key in $venueOUMapping.Keys) {
+        if ($jobTitle -match $key) {
+            return $venueOUMapping[$key]
+        }
+    }
+
+    # Default mapping using the existing OUMapping
+    if ($OUMapping.ContainsKey($jobTitle)) {
+        return $OUMapping[$jobTitle]
+    } else {
+        return "OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com" # Default OU if no match is found
+    }
+}
+
+# Function to Update User's OU
+function UpdateUserOU {
+    param (
+        [PSCustomObject]$AdUser,
+        [string]$correctOU
+    )
+
+    try {
+        # Move the user to the correct OU
+        Move-ADObject -Identity $AdUser.DistinguishedName -TargetPath $correctOU
+        Write-Host "Moved user '$($AdUser.Name)' to '$correctOU'." -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Failed to move user '$($AdUser.Name)' to '$correctOU': $($_.Exception.Message)" -ForegroundColor Red
+    }
 }
 
 

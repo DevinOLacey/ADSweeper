@@ -71,7 +71,9 @@ try {
     # Establish SQL Connection
     $conn = Connect-SqlServer
     if ($conn) {
-        $AllAdUsers = Get-ADUser -Filter "enabled -eq 'true'" -Properties $AdFields
+        # $AllAdUsers = Get-ADUser -Filter "enabled -eq 'true'" -Properties $AdFields
+        # Retrieve only users from the Beverage department
+        $AllAdUsers = Get-ADUser -Filter { enabled -eq $true -and Department -eq "Beverage" } -Properties $AdFields
 
         $AdUsers = foreach ($AdUser in $AllAdUsers) {
             if (
@@ -181,6 +183,16 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                         $Changes["Description"] = $SqlTitle
                     }
 
+                    # Determine the correct OU based on the job title
+                    $CorrectOU = MapOU -jobTitle $AdUser.Title
+
+                    # Check if the user is in the correct OU
+                    if ($AdUser.DistinguishedName -notmatch $CorrectOU) {
+                        # Update the user's OU
+                        UpdateUserOU -AdUser $AdUser -correctOU $CorrectOU
+                        $Changes["OU"] = $CorrectOU
+                    }
+
                     # Track in Updated Users if There's at Least One Difference
                     if ($Changes.Count -gt 0) {
                         $AllUpdatedUsers += [PSCustomObject]@{
@@ -193,6 +205,7 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                             Title          = $AdUser.Title
                             SQLTitle       = $SqlTitle
                             EmployeeNumber = if ($Changes["EmployeeNumber"]) { $Changes["EmployeeNumber"] } else { $AdUser.EmployeeNumber }
+                            OU             = if ($Changes["OU"]) { $Changes["OU"] } else { $AdUser.DistinguishedName }
                             DN             = $AdUser.DistinguishedName
                         }
                     }
@@ -338,6 +351,7 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                 $titleCell  = $ws.Cells[$row,7].Value
                 $sqlTitleCell = $ws.Cells[$row,8].Value
                 $empNumCell = $ws.Cells[$row,9].Value
+                $ouCell = $ws.Cells[$row,10].Value # Assuming OU is the 10th column
 
                 $hasIssue = $false
                 $formattedCells = @()
@@ -378,6 +392,13 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                 if ("EmployeeNumber" -in $Changes.Keys) {
                     Set-ExcelRange -Worksheet $ws -Range "I${row}:I${row}" -BackgroundColor LightGreen 
                     $formattedCells += "I${row}"
+                    $hasIssue = $true
+                }
+
+                # Highlight OU if it's changed
+                if ("OU" -in $Changes.Keys) {
+                    Set-ExcelRange -Worksheet $ws -Range "J${row}:J${row}" -BackgroundColor LightGreen
+                    $formattedCells += "J${row}"
                     $hasIssue = $true
                 }
 
