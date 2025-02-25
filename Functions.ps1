@@ -170,6 +170,7 @@ function MapJobTitles {
         "FOOD COURT ATTENDANT" = "Marketplace Attendant"
         "FOOD COURT BUS PERSON" = "Marketplace Bus Person"
         "FB FOOD COURT SPVSR" = "Marketplace Supervisor"
+        "MARKETPLACE SPVSR" = "Marketplace Supervisor"
         "FOOD COURT COOK 1" = "Marketplace Cook 1"
         "FOOD COURT COOK 2" = "Marketplace Cook 2"
         "FB FOOD COURT MANAGER" = "Marketplace Manager"
@@ -350,7 +351,7 @@ $OUMapping = @{
     "Security Supervisor - Grave" = "OU=Security Supervior,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Security Officer" = "OU=Security Officer II,OU=Security Officer,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Security Coordinator" = "OU=Security Coordinator,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
-    "Security Administrator" = "OU=Security Administrator,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Security Administrator" = "OU=Security Coordinator,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Security Communications Manager" = "OU=Security Comms Supv,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Exterior Patrol Officer" = "OU=Exterior Patrol Officer,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Exterior Patrol Officer - Grave" = "OU=Exterior Patrol Officer,OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
@@ -366,10 +367,10 @@ $OUMapping = @{
     "Slot Shift Manager" = "OU=Assistant Slots Shift Manager,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Assistant Slot Technician Shift Manager" = "OU=Slot Technician Assistant Shift Manager,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Slot Technician" = "OU=Slot Technician,OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
-    "Spa Manager" = "OU=Spa Manager,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Spa Manager" = "OU=Spa,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Executive Steward" = "OU=Stewarding,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Lead Surveillance Agent" = "OU=Surveillance Lead Agent,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
-    "Surveillance Agent" = "OU=Surveillance Agent,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    "Surveillance Agent" = "OU=Surveillance Agents,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Surveillance Technician" = "OU=Surveillance Technician,OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Director of Table Games" = "OU=Director of Table Games,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     "Table Games Shift Manager" = "OU=Assistant Table Games Shift Manager,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
@@ -396,33 +397,104 @@ $OUMapping = @{
     "Director of Business Intelligence" = "OU=Director of BI Data Analytics,OU=Business Intelligence,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
 }
 
+# Function to Map Department to OU
+function DepartmentMapping {
+    param (
+        [string]$department
+    )
+    Write-Debug "Mapping department to OU: $department"
+
+    # Define department to OU mapping
+    $departmentOUMapping = @{
+        "Audio Visual" = "OU=Audio Visual,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Business Intelligence" = "OU=Business Intelligence,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Casino Banquets" = "OU=Casino Banquets,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Compliance" = "OU=Compliance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Count" = "OU=Count,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "EVS" = "OU=EVS,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Executive" = "OU=Exec,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Facilities" = "OU=Facilities,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Finance" = "OU=Finance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Food and Beverage" = "OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "F&B Admin" = "OU=FB Admin,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "F&B" = "OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "TDR" = "OU=TDR,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Emeralds" = "OU=Emerald,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Prime Cut" = "OU=Prime Cut,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Jamul 23 Restaurant Bar" = "OU=Jamul 23 Restaurant Bar,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Tony Gwynns" = "OU=Tony Gwynns,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Jive" = "OU=JIVe,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Gift Shop" = "OU=Retail Gift Shop,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "High Limit Bar" = "OU=High Limit Bar,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Loft" = "OU=Loft,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Beverage" = "OU=Beverage,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Stewarding" = "OU=Stewarding,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Marketplace" = "OU=Marketplace,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Hotel Admin" = "OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Spa" = "OU=Spa,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Front Desk" = "OU=Front Desk,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Hotel Housekeeping" = "OU=Hotel Housekeeping,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Starlite Pool" = "OU=Starlite Pool,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Guest Relations" = "OU=Guest Relations,OU=Hotel Admin,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Human Resources" = "OU=Human Resources,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Marketing" = "OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Player Development" = "OU=Player Development,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Player Services" = "OU=Player Services,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Cage" = "OU=Player Services,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Purchasing" = "OU=Purchasing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Security" = "OU=Security,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Slots" = "OU=Slots,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Surveillance" = "OU=Surveillance,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Table Games" = "OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Poker Room" = "OU=Table Games,OU=Table Games,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Valet" = "OU=Valet,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    }
+
+    # Return the mapped OU or default if not found
+    $mappedOU = $departmentOUMapping[$department]
+    if ($null -eq $mappedOU) {
+        $mappedOU = "OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+    }
+    Write-Debug "Mapped department '$department' to OU: $mappedOU"
+    return $mappedOU
+}
+
 # Function to Map Job Titles to OUs
 function MapOU {
     param (
-        [string]$jobTitle
+        [string]$jobTitle,
+        [string]$department
     )
 
     # Venue-specific OU mappings
     $venueOUMapping = @{
-        "Emeralds"    = "OU=Asian Restaurant,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Emeralds"    = "OU=Emerald,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
         "Tony Gwynns" = "OU=Tony Gwynns,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
         "Jive"        = "OU=JIVe,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
         "Loft"        = "OU=Loft,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
-        "Marketplace" = "OU=Food Court,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Marketplace" = "OU=Marketplace,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Prime Cut"   = "OU=Prime Cut,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Jamul 23 Restaurant Bar" = "OU=Jamul 23,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+        "Gift Shop" = "OU=Retail Gift Shop,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
     }
 
     # Check for venue-specific titles
     foreach ($key in $venueOUMapping.Keys) {
         if ($jobTitle -match $key) {
+            Write-Debug "Matched job title '$jobTitle' to venue-specific OU: $($venueOUMapping[$key])"
             return $venueOUMapping[$key]
         }
     }
 
     # Default mapping using the existing OUMapping
     if ($OUMapping.ContainsKey($jobTitle)) {
+        Write-Debug "Mapped job title '$jobTitle' to OU: $($OUMapping[$jobTitle])"
         return $OUMapping[$jobTitle]
     } else {
-        return "OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com" # Default OU if no match is found
+        # Call DepartmentMapping if no job title match is found
+        $defaultOU = DepartmentMapping -department $department
+        Write-Debug "Defaulted to department mapping for '$department': $defaultOU"
+        return $defaultOU
     }
 }
 
@@ -436,7 +508,7 @@ function UpdateUserOU {
     try {
         # Move the user to the correct OU
         Move-ADObject -Identity $AdUser.DistinguishedName -TargetPath $correctOU
-        Write-Host "Moved user '$($AdUser.Name)' to '$correctOU'." -ForegroundColor Green
+        # Write-Host "Moved user '$($AdUser.Name)' to '$correctOU'." -ForegroundColor Green
     }
     catch {
         Write-Host "Failed to move user '$($AdUser.Name)' to '$correctOU': $($_.Exception.Message)" -ForegroundColor Red

@@ -73,8 +73,9 @@ try {
     if ($conn) {
         # $AllAdUsers = Get-ADUser -Filter "enabled -eq 'true'" -Properties $AdFields
         # Retrieve only users from the Beverage department
-        $AllAdUsers = Get-ADUser -Filter { enabled -eq $true -and Department -eq "Beverage" } -Properties $AdFields
+        $AllAdUsers = Get-ADUser -Filter { enabled -eq $true } -Properties $AdFields
 
+        # Filter AD Users
         $AdUsers = foreach ($AdUser in $AllAdUsers) {
             if (
                 $ExcludedDepartments -notcontains $AdUser.Department -and
@@ -91,6 +92,7 @@ try {
             Write-Warning "No AD users found outside the excluded departments."
         }
 
+        # Apply AD changes here
         foreach ($AdUser in $AdUsers) {
             $FullName       = $AdUser.Name
             $EmployeeNumber = $AdUser.EmployeeNumber
@@ -183,14 +185,37 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                         $Changes["Description"] = $SqlTitle
                     }
 
-                    # Determine the correct OU based on the job title
-                    $CorrectOU = MapOU -jobTitle $AdUser.Title
+                    # Check if the user is terminated
+                    if ($Row.EmployeeStatus -eq 'Terminated') {
+                        $CorrectOU = "OU=Disabled,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+                    } else {
+                        # Determine the correct OU based on the job title
+                        $CorrectOU = MapOU -jobTitle $AdUser.Title -department $AdUser.Department
+                    }
 
-                    # Check if the user is in the correct OU
-                    if ($AdUser.DistinguishedName -notmatch $CorrectOU) {
-                        # Update the user's OU
-                        UpdateUserOU -AdUser $AdUser -correctOU $CorrectOU
-                        $Changes["OU"] = $CorrectOU
+                    # Ensure CorrectOU is a valid string
+                    if (-not [string]::IsNullOrEmpty($CorrectOU)) {
+                        # Check if the user is in the correct OU
+                        if ($AdUser.DistinguishedName -notmatch $CorrectOU) {
+                            # New logic to handle supervisors and managers in Food and Beverage
+                            if ($AdUser.DistinguishedName -match "OU=supervisors,OU=Food and Beverage,OU=users,OU=Jamul,DC=jamulcasinosd,DC=com") {
+                                # Do not move if already in the supervisors OU
+                                # Write-Host "$($AdUser.Name) is already in the supervisors OU. No move needed." -ForegroundColor Cyan
+                            } elseif ($AdUser.Title -match "(?i)supervisor|manager" -and $AdUser.DistinguishedName -match "OU=Food and Beverage,OU=users,OU=Jamul,DC=jamulcasinosd,DC=com") {
+                                # Move to supervisors OU if title contains supervisor or manager
+                                $CorrectOU = "OU=supervisors,OU=Food and Beverage,OU=users,OU=Jamul,DC=jamulcasinosd,DC=com"
+                                UpdateUserOU -AdUser $AdUser -correctOU $CorrectOU
+                                $Changes["OU"] = $CorrectOU
+                                Write-Host "Moving $($AdUser.Name) to supervisors OU due to title." -ForegroundColor Cyan
+                            } else {
+                                # Update the user's OU
+                                UpdateUserOU -AdUser $AdUser -correctOU $CorrectOU
+                                $Changes["OU"] = $CorrectOU
+                                Write-Host "Moving $($AdUser.Name) to $CorrectOU" -ForegroundColor Cyan
+                            }
+                        }
+                    } else {
+                        Write-Host "Failed to determine CorrectOU for $($AdUser.Name). Skipping OU update." -ForegroundColor Red
                     }
 
                     # Track in Updated Users if There's at Least One Difference
@@ -206,7 +231,6 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                             SQLTitle       = $SqlTitle
                             EmployeeNumber = if ($Changes["EmployeeNumber"]) { $Changes["EmployeeNumber"] } else { $AdUser.EmployeeNumber }
                             OU             = if ($Changes["OU"]) { $Changes["OU"] } else { $AdUser.DistinguishedName }
-                            DN             = $AdUser.DistinguishedName
                         }
                     }
 
@@ -390,14 +414,14 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
 
                 # Highlight EmployeeNumber if it's changed
                 if ("EmployeeNumber" -in $Changes.Keys) {
-                    Set-ExcelRange -Worksheet $ws -Range "I${row}:I${row}" -BackgroundColor LightGreen 
+                    Set-ExcelRange -Worksheet $ws -Range "I${row}:I${row}" -BackgroundColor Green 
                     $formattedCells += "I${row}"
                     $hasIssue = $true
                 }
 
                 # Highlight OU if it's changed
                 if ("OU" -in $Changes.Keys) {
-                    Set-ExcelRange -Worksheet $ws -Range "J${row}:J${row}" -BackgroundColor LightGreen
+                    Set-ExcelRange -Worksheet $ws -Range "J${row}:J${row}" -BackgroundColor Green
                     $formattedCells += "J${row}"
                     $hasIssue = $true
                 }
