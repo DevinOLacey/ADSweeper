@@ -12,6 +12,10 @@ This script manages Active Directory (AD) users by updating employee attributes 
 3. **Updated Users:** Attributes corrected based on SQL data.
    - **No manual action required.** This is for documentation purposes only.
 
+4. **Disabled Users:** Users who are disabled in AD.
+   - **Automatic Updates:** The script automatically moves disabled users to a designated OU and removes them from all groups.
+   - **No manual action required.** This is for documentation purposes only.
+
 ## Setup Instructions
 
 ### 1. Download and Extract
@@ -20,12 +24,12 @@ This script manages Active Directory (AD) users by updating employee attributes 
 
 ### 2. Create Directory and Move Files
 1. Create the required directory:
-   ```
+   ```bash
    mkdir -p C:\ADSweeper\Script
    ```
 
 2. Move all extracted files into `C:\ADSweeper\Script` maintaining this structure:
-   ```
+   ```plaintext
    C:\ADSweeper\Script\
    ├── ADSweeper.psd1
    ├── ADSweeper.psm1
@@ -44,14 +48,14 @@ This script manages Active Directory (AD) users by updating employee attributes 
 
 ### 3. Run the Script
 Navigate to `C:\ADSweeper\Script` and run:
-```
+```bash
 C:\ADSweeper\Script\AD SweeperV2.bat
 ```
 > Note: This batch file requires elevated privileges.
 
 ### 4. Additional Tools
 To update employee numbers for unmatched users, run:
-```
+```bash
 C:\ADSweeper\Script\Add Employee Number.bat
 ```
 

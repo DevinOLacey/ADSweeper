@@ -63,27 +63,18 @@ $AllNoSqlData             = @()
 $TerminatedActiveAdUsers  = @()
 $AllUpdatedUsers          = @()
 $Admins = @()
-
-# Initialize a hash table to track processed users
 $ProcessedUsers = @{}
+$DisabledUsers = @()
 
 try {
     # Establish SQL Connection
     $conn = Connect-SqlServer
     if ($conn) {
-        # $AllAdUsers = Get-ADUser -Filter "enabled -eq 'true'" -Properties $AdFields
-        # Retrieve only users from the Beverage department
-        $AllAdUsers = Get-ADUser -Filter { enabled -eq $true } -Properties $AdFields
-
         # Filter AD Users
-        $AdUsers = foreach ($AdUser in $AllAdUsers) {
-            if (
-                $ExcludedDepartments -notcontains $AdUser.Department -and
-                $ExcludedDepartments -notcontains $AdUser.Office -and
-                $AdUser.Name -notmatch "Josh Ford"
-            ) {
-                $AdUser
-            }
+        $AdUsers = Get-ADUser -Filter * -Properties $AdFields | Where-Object {
+            $ExcludedDepartments -notcontains $_.Department -and
+            $ExcludedDepartments -notcontains $_.Office -and
+            $_.Name -ne "Josh Ford"
         }
 
         Write-Host "Filtered AD user count: $($AdUsers.Count)"
@@ -118,27 +109,11 @@ WHERE EmployeeNumber = '$CleanEmployeeNumber'
             }
             else {
                 # Look Up by Name if No EmployeeNumber
-                $FirstName = $null
-                $LastName  = $null
+                $NameParts = $FullName -split ', ' -or $FullName -split ' '
+                if ($NameParts.Count -ge 2) {
+                    $FirstName = $NameParts[0]
+                    $LastName  = $NameParts[-1]
 
-                if ($FullName -match ',') {
-                    # "Last, First" Format
-                    $NameParts = $FullName -split ', '
-                    if ($NameParts.Count -ge 2) {
-                        $LastName  = $NameParts[0]
-                        $FirstName = $NameParts[1]
-                    }
-                }
-                else {
-                    # "First Last" Format
-                    $NameParts = $FullName -split ' '
-                    if ($NameParts.Count -ge 2) {
-                        $FirstName = $NameParts[0]
-                        $LastName  = $NameParts[-1]
-                    }
-                }
-
-                if ($FirstName -and $LastName) {
                     $Query = @"
 SELECT Department, JobTitle, EmployeeNumber, EmployeeStatus
 FROM UT_HCJ_IDWORKS 
@@ -185,9 +160,38 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                         $Changes["Description"] = $SqlTitle
                     }
 
-                    # Check if the user is terminated
-                    if ($Row.EmployeeStatus -eq 'Terminated') {
+                    # Check if the user is terminated or disabled
+                    if ($Row.EmployeeStatus -eq 'Terminated' -or -not $AdUser.Enabled) {
                         $CorrectOU = "OU=Disabled,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+                        $ChangesMade = $false
+
+                        # Remove user from all groups
+                        $Groups = Get-ADUser -Identity $AdUser.DistinguishedName -Properties MemberOf | Select-Object -ExpandProperty MemberOf
+                        if ($Groups.Count -gt 0) {
+                            foreach ($Group in $Groups) {
+                                Remove-ADGroupMember -Identity $Group -Members $AdUser -Confirm:$false
+                            }
+                            $ChangesMade = $true
+                        }
+
+                        # Check if the user is in the correct OU
+                        if ($AdUser.DistinguishedName -notmatch $CorrectOU) {
+                            UpdateUserOU -AdUser $AdUser -correctOU $CorrectOU
+                            $ChangesMade = $true
+                        }
+
+                        # Add user to DisabledUsers collection if changes were made
+                        if ($ChangesMade) {
+                            $DisabledUsers += [PSCustomObject]@{
+                                Name              = $AdUser.Name
+                                SamAccountName    = $AdUser.SamAccountName
+                                Department        = $AdUser.Department
+                                Title             = $AdUser.Title
+                                EmployeeNumber    = $AdUser.EmployeeNumber
+                                DistinguishedName = $AdUser.DistinguishedName
+                                Groups            = $Groups -join ", "
+                            }
+                        }
                     } else {
                         # Determine the correct OU based on the job title
                         $CorrectOU = MapOU -jobTitle $AdUser.Title -department $AdUser.Department
@@ -459,6 +463,23 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
         }
         else {
             # Write-Warning "No users with insufficient access rights found to export."
+        }
+
+        # Export Disabled Users to a new worksheet
+        if ($DisabledUsers.Count -gt 0) {
+            try {
+                $DisabledUsers |
+                    Export-Excel -Path $ConsolidatedOutputFile `
+                                 -WorksheetName "Disabled Users" `
+                                 -AutoSize -Append
+                Write-Host "Disabled users with changes have been exported to 'Disabled Users' worksheet." -ForegroundColor Green
+            }
+            catch {
+                Write-Host "Failed to export Disabled Users: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        }
+        else {
+            Write-Warning "No disabled users with changes found to export."
         }
 
         # Close SQL Connection
