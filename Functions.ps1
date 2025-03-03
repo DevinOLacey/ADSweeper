@@ -1,4 +1,40 @@
-﻿function ConvertDeptName {
+﻿# Functions.ps1
+<#
+    Script Name: Functions.ps1
+    Purpose    : Helper functions for AD_SweeperV2.ps1 and New_User_Creation.ps1
+    Author     : Isidro Paniagua and Devin Lacey
+    Date       : 01/17/2025
+
+    Description:
+    This script contains utility functions used by AD_SweeperV2.ps1 and New_User_Creation.ps1 for:
+    - Converting and standardizing department names
+    - Mapping job titles to standard formats
+    - Managing Active Directory Organizational Units (OUs)
+    - Sending email notifications
+    - Text formatting and case conversion
+
+    Dependencies:
+    - Active Directory PowerShell module
+    - Exchange Server access for email notifications
+    - Appropriate AD permissions for OU management
+#>
+
+<#
+.SYNOPSIS
+    Converts department names to standardized format.
+
+.DESCRIPTION
+    Takes a department name as input and returns a standardized version based on predefined mappings.
+    If no mapping exists, converts the name to proper title case.
+
+.PARAMETER department
+    The department name to standardize.
+
+.EXAMPLE
+    ConvertDeptName -department "ACCOUNTING FINANCE"
+    Returns: "Finance"
+#>
+function ConvertDeptName {
     param (
         [string]$department
     )
@@ -48,6 +84,21 @@
     return (ConvertToTitleCase $department)
 }
 
+<#
+.SYNOPSIS
+    Maps job titles to standardized formats.
+
+.DESCRIPTION
+    Converts various forms of job titles to their standardized versions using a comprehensive mapping dictionary.
+    Handles special cases for different departments and ensures consistent naming across the organization.
+
+.PARAMETER adTitle
+    The job title to standardize.
+
+.EXAMPLE
+    MapJobTitles -adTitle "SLOT TECH SHIFT MANAGER"
+    Returns: "Slot Technician Shift Manager"
+#>
 function MapJobTitles {
     param (
         [string]$adTitle
@@ -238,6 +289,22 @@ function MapJobTitles {
     }
 }
 
+<#
+.SYNOPSIS
+    Sends email notifications about script actions.
+
+.DESCRIPTION
+    Sends automated email notifications using the organization's Exchange server.
+    Includes audit information about who ran the script and what action was taken.
+
+.PARAMETER message
+    The message content to send.
+.PARAMETER recipient
+    The email address of the recipient.
+
+.EXAMPLE
+    sendEmail -message "New user account created" -recipient "admin@domain.com"
+#>
 function sendEmail {
     param (
     $message,
@@ -259,6 +326,21 @@ function sendEmail {
     Send-MailMessage -SmtpServer $smtpServer -From $from -To $recipient -Subject $subject -Body $body
 }
 
+<#
+.SYNOPSIS
+    Converts strings to proper title case.
+
+.DESCRIPTION
+    Converts input strings to proper title case format, removing apostrophes and handling capitalization.
+    Uses .NET TextInfo for proper word capitalization.
+
+.PARAMETER myString
+    The string to convert to title case.
+
+.EXAMPLE
+    ConvertToTitleCase -myString "HUMAN RESOURCES"
+    Returns: "Human Resources"
+#>
 function ConvertToTitleCase {
     param (
         [string]$myString
@@ -396,7 +478,21 @@ $OUMapping = @{
     "Director of Business Intelligence" = "OU=Director of BI Data Analytics,OU=Business Intelligence,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
 }
 
-# Function to Map Department to OU
+<#
+.SYNOPSIS
+    Maps departments to their corresponding Organizational Units.
+
+.DESCRIPTION
+    Takes a department name and returns the corresponding OU path in Active Directory.
+    Includes fallback to default OU if no specific mapping is found.
+
+.PARAMETER department
+    The department name to map to an OU.
+
+.EXAMPLE
+    DepartmentMapping -department "Marketing"
+    Returns: "OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+#>
 function DepartmentMapping {
     param (
         [string]$department
@@ -458,7 +554,23 @@ function DepartmentMapping {
     return $mappedOU
 }
 
-# Function to Map Job Titles to OUs
+<#
+.SYNOPSIS
+    Maps job titles to appropriate OUs with venue-specific handling.
+
+.DESCRIPTION
+    Determines the correct OU for a user based on their job title and department.
+    Handles special cases for venue-specific roles and provides fallback options.
+
+.PARAMETER jobTitle
+    The job title to map to an OU.
+.PARAMETER department
+    The department name to use as fallback for OU mapping.
+
+.EXAMPLE
+    MapOU -jobTitle "Emerald Host" -department "Food and Beverage"
+    Returns: "OU=Emerald,OU=Food and Beverage,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+#>
 function MapOU {
     param (
         [string]$jobTitle,
@@ -497,7 +609,22 @@ function MapOU {
     }
 }
 
-# Function to Update User's OU
+<#
+.SYNOPSIS
+    Moves an AD user to the specified Organizational Unit.
+
+.DESCRIPTION
+    Attempts to move an Active Directory user object to a new OU location.
+    Includes error handling and logging for failed operations.
+
+.PARAMETER AdUser
+    The AD user object to move.
+.PARAMETER correctOU
+    The target OU path where the user should be moved.
+
+.EXAMPLE
+    UpdateUserOU -AdUser $userObject -correctOU "OU=Marketing,OU=Users,OU=Jamul,DC=jamulcasinosd,DC=com"
+#>
 function UpdateUserOU {
     param (
         [PSCustomObject]$AdUser,

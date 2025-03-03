@@ -1,23 +1,50 @@
-# SqlUtils.ps1
-# This file provides functions for SQL Server connectivity and query execution.
+<#
+    Script Name: SqlUtils.ps1
+    Purpose    : Provide SQL Server connectivity and query execution functions for ADSweeper
+    Author     : Devin Lacey
+    Date       : 01/17/2025
 
-# Ensure $PSScriptRoot is set.
+    Description:
+    This script provides secure SQL Server connectivity and query execution functions.
+    It handles:
+    - Secure password management using encryption
+    - SQL Server connection establishment
+    - Query execution
+    - Connection cleanup
+    
+    Security Features:
+    - Uses encrypted password storage
+    - Implements secure string handling
+    - Supports encrypted connections to SQL Server
+    
+    Dependencies:
+    - Microsoft.Data.SqlClient.dll (v5.0.1)
+    - Encrypted password file (encrypted_password.txt)
+    - Encryption key file (encryption_key.bin)
+    
+    Required Files:
+    - encrypted_password.txt: Contains the encrypted SQL password
+    - encryption_key.bin: Contains the 256-bit encryption key
+    - Microsoft.Data.SqlClient.dll: SQL Server client library
+#>
+
+# Ensure $PSScriptRoot is set for proper file path resolution
 if (-not $PSScriptRoot) {
     $PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 }
 
 Write-Verbose "Loading SQL Utils from $PSScriptRoot"
 
-# === Connection Details ===
+# === SQL Server Connection Configuration ===
 $ServerName   = "jcdbs05pr"
 $DatabaseName = "IDWorks"
 $Username     = "insights_svc"
 
-# Set paths
+# Set paths for security files
 $PasswordFile = Join-Path -Path $PSScriptRoot -ChildPath "encrypted_password.txt"
 $KeyFile = Join-Path -Path $PSScriptRoot -ChildPath "encryption_key.bin"
 
-# Validate that both files exist
+# Validate security files existence
 if (-not (Test-Path $PasswordFile)) {
     Write-Error "ERROR: Encrypted password file not found at: $PasswordFile"
     return
@@ -28,21 +55,21 @@ if (-not (Test-Path $KeyFile)) {
     return
 }
 
-# Read encryption key (256-bit length required)
+# Read and validate encryption key
 $Key = [System.IO.File]::ReadAllBytes($KeyFile)
 if ($Key.Length -ne 32) {
     Write-Error "ERROR: Invalid encryption key length. Expected 32 bytes, found $($Key.Length) bytes."
     return
 }
 
-# Read encrypted password
+# Read and decrypt password
 $EncryptedPassword = Get-Content -Path $PasswordFile
 if ([string]::IsNullOrEmpty($EncryptedPassword)) {
     Write-Error "ERROR: Encrypted password file is empty or corrupt."
     return
 }
 
-# Decrypt password
+# Decrypt password with error handling
 try {
     $SecurePassword = ConvertTo-SecureString -String $EncryptedPassword -Key $Key
     $Password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
@@ -53,12 +80,10 @@ try {
     return
 }
 
-
-
-# Define the path to the SQL Client DLL using a relative path.
+# Load SQL Client DLL
 $SqlClientDll = Join-Path -Path $PSScriptRoot -ChildPath "Dependencies\Microsoft.Data.SqlClient.5.0.1\lib\netstandard2.0\Microsoft.Data.SqlClient.dll"
 
-# Automatically unblock the DLL if it is marked as downloaded from the internet.
+# Automatically unblock DLL if needed
 try {
     $zoneIdentifier = Get-Item -Path $SqlClientDll -Stream "Zone.Identifier" -ErrorAction SilentlyContinue
     if ($zoneIdentifier) {
@@ -70,7 +95,7 @@ try {
     Write-Verbose "Could not check or unblock the DLL: $_"
 }
 
-# Load the SQL Client DLL.
+# Load the SQL Client DLL
 try {
     Add-Type -Path $SqlClientDll -ErrorAction Stop
     Write-Host "Loaded SQL Client DLL from: $SqlClientDll" -ForegroundColor Green
@@ -79,13 +104,31 @@ try {
     return
 }
 
-# === Function: Connect-SqlServer ===
+<#
+.SYNOPSIS
+    Establishes a connection to the SQL Server database.
+
+.DESCRIPTION
+    Creates and opens a new SQL Server connection using the configured credentials.
+    Implements error handling and connection validation.
+
+.OUTPUTS
+    System.Data.SqlClient.SqlConnection
+    Returns the open SQL connection object if successful, null if connection fails.
+
+.EXAMPLE
+    $conn = Connect-SqlServer
+    if ($conn) { 
+        # Use the connection
+        Close-SqlConnection $conn 
+    }
+#>
 function Connect-SqlServer {
     Write-Host "Attempting to connect to SQL Server..." -ForegroundColor Yellow
 
-    # Build the connection string.
+    # Build the connection string
     $connString = "Server=$ServerName,1433;Database=$DatabaseName;User ID=$Username;Password=$Password;TrustServerCertificate=True;"
-    Write-Verbose "Connection string: $connString"  # (For debugging purposes. Remove or mask sensitive details in production.)
+    Write-Verbose "Connection string: $connString"
 
     $conn = New-Object System.Data.SqlClient.SqlConnection
     $conn.ConnectionString = $connString
@@ -101,7 +144,28 @@ function Connect-SqlServer {
     }
 }
 
-# === Function: Execute-SqlQuery ===
+<#
+.SYNOPSIS
+    Executes a SQL query on the provided connection.
+
+.DESCRIPTION
+    Executes the provided SQL query and returns the results as a DataTable.
+    Includes error handling and connection state validation.
+
+.PARAMETER Connection
+    The SQL Server connection object to use.
+
+.PARAMETER SqlQuery
+    The SQL query to execute.
+
+.OUTPUTS
+    System.Data.DataTable
+    Returns the query results as a DataTable, or null if execution fails.
+
+.EXAMPLE
+    $query = "SELECT * FROM Users"
+    $results = Execute-SqlQuery -Connection $conn -SqlQuery $query
+#>
 function Execute-SqlQuery {
     param (
         [System.Data.SqlClient.SqlConnection]$Connection,
@@ -133,7 +197,20 @@ function Execute-SqlQuery {
     }
 }
 
-# === Function: Close-SqlConnection ===
+<#
+.SYNOPSIS
+    Safely closes a SQL Server connection.
+
+.DESCRIPTION
+    Closes and disposes of the SQL Server connection, ensuring proper cleanup.
+    Includes connection state validation and error handling.
+
+.PARAMETER Connection
+    The SQL Server connection object to close.
+
+.EXAMPLE
+    Close-SqlConnection -Connection $conn
+#>
 function Close-SqlConnection {
     param (
         [System.Data.SqlClient.SqlConnection]$Connection
