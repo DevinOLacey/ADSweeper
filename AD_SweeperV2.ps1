@@ -301,16 +301,18 @@ WHERE FirstName = '$FirstName' AND LastName = '$LastName'
                 }
                 else {
                     # No Matching SQL Data
-                    $AllNoSqlData += [PSCustomObject]@{
-                        Name           = $FullName
-                        Office         = $AdUser.Office
-                        Department     = $AdUser.Department
-                        SQLDepartment  = "N/A"
-                        ' '            = ''
-                        Description    = $AdUser.Description
-                        Title          = $AdUser.Title
-                        SQLTitle       = "N/A"
-                        EmployeeNumber = $AdUser.EmployeeNumber
+                    if ($SqlResult -eq $null -and $AdUser.Enabled) {
+                        $AllNoSqlData += [PSCustomObject]@{
+                            Name           = $FullName
+                            Office         = $AdUser.Office
+                            Department     = $AdUser.Department
+                            SQLDepartment  = "N/A"
+                            ' '            = ''
+                            Description    = $AdUser.Description
+                            Title          = $AdUser.Title
+                            SQLTitle       = "N/A"
+                            EmployeeNumber = $AdUser.EmployeeNumber
+                        }
                     }
                 }
             }
